@@ -360,6 +360,14 @@ module "eks" {
   manage_cluster_iam_resources          = var.cluster_iam_role_name == null ? true : false
   cluster_iam_role_name                 = var.cluster_iam_role_name
 
+
+  worker_create_security_group          = var.worker_security_group_id == null ? true : false
+  worker_security_group_id              = var.worker_security_group_id
+
+  cluster_create_security_group         = var.cluster_security_group_id == null ? true : false
+  cluster_security_group_id             = var.cluster_security_group_id
+
+
   workers_group_defaults = {
     # tags = var.tags
     additional_security_group_ids        = [local.security_group_id]
