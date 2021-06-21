@@ -291,13 +291,8 @@ module "eks" {
 
 
   workers_group_defaults = {
-<<<<<<< HEAD
-    # tags = var.tags
-    additional_security_group_ids        = [ local.security_group_id ]
-=======
     tags = [ { key = "k8s.io/cluster-autoscaler/${local.cluster_name}", value = "owned", propagate_at_launch = true }, { key = "k8s.io/cluster-autoscaler/enabled", value = "true", propagate_at_launch = true} ]
     additional_security_group_ids        = [local.security_group_id]
->>>>>>> Auto Scaling (#72)
     metadata_http_tokens                 = "required"
     metadata_http_put_response_hop_limit = 1
     iam_instance_profile_name            = var.workers_iam_role_name
