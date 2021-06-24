@@ -26,8 +26,9 @@ data "aws_availability_zones" "available" {}
 data "aws_caller_identity" "terraform" {}
 
 locals {
-
   security_group_id                    = var.security_group_id == null ? aws_security_group.sg[0].id : data.aws_security_group.sg[0].id
+  cluster_security_group_id            = var.cluster_security_group_id == null ? aws_security_group.cluster_security_group.0.id : var.cluster_security_group_id
+  workers_security_group_id            = var.workers_security_group_id == null ? aws_security_group.workers_security_group.0.id : var.workers_security_group_id
   cluster_name                         = "${var.prefix}-eks"
   default_public_access_cidrs          = var.default_public_access_cidrs == null ? [] : var.default_public_access_cidrs
   vm_public_access_cidrs               = var.vm_public_access_cidrs == null ? local.default_public_access_cidrs : var.vm_public_access_cidrs
@@ -94,34 +95,13 @@ module "vpc" {
   private_subnet_tags = merge(var.tags, { "kubernetes.io/role/internal-elb" = "1" }, { "kubernetes.io/cluster/${local.cluster_name}" = "shared" })
 }
 
-data aws_security_group sg {
-  count = var.security_group_id == null ? 0 : 1
-  id = var.security_group_id
-}
-
-# Security Groups - https://www.terraform.io/docs/providers/aws/r/security_group.html
-resource "aws_security_group" "sg" {
-  count = var.security_group_id == null ? 1 : 0
-  name   = "${var.prefix}-sg"
-  vpc_id = module.vpc.vpc_id
-
-  egress {
-    description = "Allow all outbound traffic."
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = merge(var.tags, tomap({ Name: "${var.prefix}-sg" }))
-}
-
 
 # EFS File System - https://www.terraform.io/docs/providers/aws/r/efs_file_system.html
 resource "aws_efs_file_system" "efs-fs" {
   count            = var.storage_type == "ha" ? 1 : 0
   creation_token   = "${var.prefix}-efs"
   performance_mode = var.efs_performance_mode
-  tags             = merge(var.tags, tomap({ Name: "${var.prefix}-efs" }))
+  tags             = merge(var.tags, { "Name" : "${var.prefix}-efs" })
 }
 
 # EFS Mount Target - https://www.terraform.io/docs/providers/aws/r/efs_mount_target.html
@@ -178,29 +158,8 @@ module "jump" {
 
   cloud_init = data.template_cloudinit_config.jump.rendered
 
-  depends_on = [module.nfs, aws_security_group_rule.all]
+  depends_on = [module.nfs]
 
-}
-
-resource "aws_security_group_rule" "vms" {
-  count             = ((var.storage_type == "standard" && var.create_nfs_public_ip) || var.create_jump_vm) && length(local.vm_public_access_cidrs) > 0 ? 1 : 0
-  type              = "ingress"
-  description       = "Allow SSH from source"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = local.vm_public_access_cidrs
-  security_group_id = local.security_group_id
-}
-
-resource "aws_security_group_rule" "all" {
-  type              = "ingress"
-  description       = "Allow internal security group communication."
-  from_port         = 0
-  to_port           = 0
-  protocol          = "all"
-  security_group_id = local.security_group_id
-  self              = true
 }
 
 data "template_file" "nfs-cloudconfig" {
@@ -255,44 +214,6 @@ module "nfs" {
   cloud_init = var.storage_type == "standard" ? data.template_cloudinit_config.nfs.0.rendered : null
 }
 
-# EBS CSI driver IAM Policy for EKS worker nodes - https://registry.terraform.io/modules/terraform-aws-modules/iam
-module "iam_policy" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
-  version = "4.1.0"
-
-  count = var.workers_iam_role_name == null ? 1 : 0
-
-  name        = "${var.prefix}_ebs_csi_policy"
-  description = "EBS CSI driver IAM Policy"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "ec2:AttachVolume",
-        "ec2:CreateSnapshot",
-        "ec2:CreateTags",
-        "ec2:CreateVolume",
-        "ec2:DeleteSnapshot",
-        "ec2:DeleteTags",
-        "ec2:DeleteVolume",
-        "ec2:DescribeInstances",
-        "ec2:DescribeSnapshots",
-        "ec2:DescribeTags",
-        "ec2:DescribeVolumes",
-        "ec2:DetachVolume",
-        "elasticfilesystem:DescribeFileSystems",
-        "iam:DeletePolicyVersion"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
 
 # Mapping node_pools to worker_groups
 locals {
@@ -361,16 +282,16 @@ module "eks" {
   cluster_iam_role_name                 = var.cluster_iam_role_name
 
 
-  worker_create_security_group          = var.worker_security_group_id == null ? true : false
-  worker_security_group_id              = var.worker_security_group_id
+  worker_create_security_group          = false
+  worker_security_group_id              = local.workers_security_group_id
 
-  cluster_create_security_group         = var.cluster_security_group_id == null ? true : false
-  cluster_security_group_id             = var.cluster_security_group_id
+  cluster_create_security_group         = false
+  cluster_security_group_id             = local.cluster_security_group_id
 
 
   workers_group_defaults = {
     # tags = var.tags
-    additional_security_group_ids        = [local.security_group_id]
+    additional_security_group_ids        = [ local.security_group_id ]
     metadata_http_tokens                 = "required"
     metadata_http_put_response_hop_limit = 1
     iam_instance_profile_name            = var.workers_iam_role_name
@@ -459,28 +380,6 @@ module "db" {
   create_db_parameter_group = var.create_postgres
   create_db_option_group    = var.create_postgres
 
-}
-
-resource "aws_security_group_rule" "postgres_internal" {
-  count             = var.create_postgres ? 1 : 0
-  type              = "ingress"
-  description       = "Allow Postgres within network"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
-  self              = true
-  security_group_id = local.security_group_id
-}
-
-resource "aws_security_group_rule" "postgres_external" {
-  count             = var.create_postgres && length(local.postgres_public_access_cidrs) > 0 ? 1 : 0
-  type              = "ingress"
-  description       = "Allow Postgres from source"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
-  cidr_blocks       = local.postgres_public_access_cidrs
-  security_group_id = local.security_group_id
 }
 
 # Resource Groups - https://www.terraform.io/docs/providers/aws/r/resourcegroups_group.html

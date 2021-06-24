@@ -10,6 +10,40 @@ The table below shows the supported scenarios when using existing/bring your own
 ||||||
 
 
+https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html
+
+### External Access Security Group
+
+| | Protocol | Ports | Source | Destinatio n|
+| :--- | :--- | :--- | :--- | :--- |
+| Outbound | All | All |  | 0.0.0.0/0 |
+| Inbound allow nfs server communication with Jump and node VMs | All | All | Self | |
+| Inbound PostgreSQL from Cluster | TCP | 5432 | Self | |
+| Inbound PostgreSQL external | TCP | 5432 | <optional> the value you would set for the [`postgres_public_access_cidrs`](../CONFIG-VARS.md#postgres_public_access_cidrs) variable | |
+| Inbound ssh access for JUMP/NFS VMs | TCP | 22 | the value you would set for the [`vm_public_access_cidrs`](../CONFIG-VARS.md#vm_public_access_cidrs) variable ||
+
+
+### Cluster Security Group
+
+| | Protocol | Ports | Source | Destinatio n|
+| :--- | :--- | :--- | :--- | :--- |
+| Outbound | All | All |  | 0.0.0.0/0 |
+| Inbound from Node VMs to Cluster api | TCP | 443 | workers security group | |
+
+### Workers Security Group
+
+
+| | Protocol | Ports | Source | Destinatio n|
+| :--- | :--- | :--- | :--- | :--- |
+| Outbound | All | All |  | 0.0.0.0/0 |
+| Inbound allow workers to talk to each other | All | All | self ||
+| Inbound from cluster control plane | TCP |1025 - 65535 | Cluster security group ||
+| Inbound from cluster control plane | TCP | 443 | Cluster Security Group ||
+
+This security group also needs the following tag:
+`"kubernetes.io/cluster/<cluster name>" = "owned"`
+
+
 When creating your BYO Network resources you should consult with your Network Administrator and use any of these methods to create a working AWS VPC Network
 - [AWS QuickStarts for VPC](https://aws.amazon.com/quickstart/architecture/vpc/)
 - See 'simple-vpc' and 'complete-vpc' examples in [terraform-aws-vpc module](https://github.com/terraform-aws-modules/terraform-aws-vpc/tree/master/examples) 
