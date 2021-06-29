@@ -15,7 +15,7 @@ The table below shows the supported scenarios when using existing/bring your own
 
 This Security Group is used to set external access to the Jump/NFS VMs and Postgres, as well as internal communication between those objects and the cluster/nodes.  
 
-| | Protocol | Ports | Source | Destinatio n|
+| | Protocol | Ports | Source | Destination|
 | :--- | :--- | :--- | :--- | :--- |
 | Outbound | All | All |  | 0.0.0.0/0 |
 | Inbound allow nfs server communication with Jump and node VMs | All | All | Self | |
@@ -28,7 +28,7 @@ This Security Group is used to set external access to the Jump/NFS VMs and Postg
 
 Allow communication from Node VMs to Cluster control plane.
 
-| | Protocol | Ports | Source | Destinatio n|
+| | Protocol | Ports | Source | Destination|
 | :--- | :--- | :--- | :--- | :--- |
 | Outbound | All | All |  | 0.0.0.0/0 |
 | Inbound from Node VMs to Cluster api | TCP | 443 | workers security group | |
@@ -37,7 +37,7 @@ Allow communication from Node VMs to Cluster control plane.
 
 Allow communication among Node VMs and form Cluster control plane to Node VMs.
 
-| | Protocol | Ports | Source | Destinatio n|
+| | Protocol | Ports | Source | Destination|
 | :--- | :--- | :--- | :--- | :--- |
 | Outbound | All | All |  | 0.0.0.0/0 |
 | Inbound allow workers to talk to each other | All | All | self ||
