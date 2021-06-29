@@ -101,11 +101,7 @@ If desired, you can deploy into an existing - VPC, Subnets and NAT Gateway, and 
  | vpc_id | ID of pre-existing VPC | string | null | Only required if deploying into existing VPC |
  | subnet_ids | Existing list of subnets mapped to desired usage | map(string) | {} | Only required if deploying into existing Subnets |
 | nat_id | ID of pre-existing AWS NAT Gateway | string | null | Only required if deploying into existing VPC and Subnets|
-<<<<<<< HEAD
- | <a name="sg_id">security_group_id</a> | ID of existing Security Group that controls external access and database communication | string | null | Only required if using existing Security Group. See [Security Group](./user/BYOnetwork.md#external-security-group) for requirements. |
-=======
  | <a name="sg_id">security_group_id</a> | ID of existing Security Group that controls external access and database communication | string | null | Only required if using existing Security Group. See [Security Group](./user/BYOnetwork.md#external-access-security-group) for requirements. |
->>>>>>> provide default security groups
 | cluster_security_group_id | ID of existing Security Group | string | null | Only required if using existing Cluster Security Group. See [Cluster Security Group](./user/BYOnetwork.md#cluster-security-group) for requirements.|
 | workers_group_id | ID of existing Security Group | string | null | Only required if using existing Security Group for Node Group VMs. See [Workers Security Group](./user/BYOnetwork.md#workers-security-group) for requirements. |
 
