@@ -110,7 +110,7 @@ resource "aws_efs_mount_target" "efs-mt" {
   count           = var.storage_type == "ha" ? length(module.vpc.private_subnets) : 0
   file_system_id  = aws_efs_file_system.efs-fs.0.id
   subnet_id       = element(module.vpc.private_subnets, count.index)
-  security_groups = [local.security_group_id]
+  security_groups = [local.workers_security_group_id]
 }
 
 # Processing the cloud-init/jump/cloud-config template file
@@ -143,7 +143,7 @@ module "jump" {
   name               = "${var.prefix}-jump"
   tags               = var.tags
   subnet_id          = local.jump_vm_subnet
-  security_group_ids = [local.security_group_id]
+  security_group_ids = [local.security_group_id, local.workers_security_group_id]
   create_public_ip   = var.create_jump_public_ip
 
   os_disk_type                  = var.os_disk_type
@@ -192,7 +192,7 @@ module "nfs" {
   name               = "${var.prefix}-nfs-server"
   tags               = var.tags
   subnet_id          = local.nfs_vm_subnet
-  security_group_ids = [local.security_group_id]
+  security_group_ids = [local.security_group_id, local.workers_security_group_id]
   create_public_ip   = var.create_nfs_public_ip
 
   os_disk_type                  = var.os_disk_type
@@ -292,7 +292,7 @@ module "eks" {
 
   workers_group_defaults = {
     tags = [ { key = "k8s.io/cluster-autoscaler/${local.cluster_name}", value = "owned", propagate_at_launch = true }, { key = "k8s.io/cluster-autoscaler/enabled", value = "true", propagate_at_launch = true} ]
-    additional_security_group_ids        = [local.security_group_id]
+    #additional_security_group_ids        = [local.security_group_id]
     metadata_http_tokens                 = "required"
     metadata_http_put_response_hop_limit = 1
     iam_instance_profile_name            = var.workers_iam_role_name
@@ -352,7 +352,7 @@ module "db" {
   password = var.postgres_administrator_password
   port     = var.postgres_server_port
 
-  vpc_security_group_ids = [local.security_group_id]
+  vpc_security_group_ids = [local.security_group_id, local.workers_security_group_id]
 
   maintenance_window = "Mon:00:00-Mon:03:00"
   backup_window      = "03:00-06:00"

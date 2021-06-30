@@ -60,8 +60,7 @@ resource "aws_security_group" "sg" {
 }
 
 resource "aws_security_group_rule" "vms" {
-  count             =  ( var.storage_type == "standard"
-                         && (var.create_nfs_public_ip || var.create_jump_vm)
+  count             =  ( ( (var.storage_type == "standard" && var.create_nfs_public_ip) || var.create_jump_vm ) 
                          && length(local.vm_public_access_cidrs) > 0
                          && var.security_group_id == null
                        )  ? 1 : 0
@@ -74,31 +73,34 @@ resource "aws_security_group_rule" "vms" {
   security_group_id = local.security_group_id
 }
 
-resource "aws_security_group_rule" "all" {
-  count             = var.security_group_id == null ? 1 : 0
-  type              = "ingress"
-  description       = "Allow internal security group communication."
-  from_port         = 0
-  to_port           = 0
-  protocol          = "all"
-  security_group_id = local.security_group_id
-  self              = true
-}
+# resource "aws_security_group_rule" "all" {
+#   count             = var.security_group_id == null ? 1 : 0
+#   type              = "ingress"
+#   description       = "Allow internal security group communication."
+#   from_port         = 0
+#   to_port           = 0
+#   protocol          = "all"
+#   security_group_id = local.security_group_id
+#   self              = true
+# }
 
 
-resource "aws_security_group_rule" "postgres_internal" {
-  count             = var.security_group_id == null && var.create_postgres ? 1 : 0
-  type              = "ingress"
-  description       = "Allow Postgres within network"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
-  self              = true
-  security_group_id = local.security_group_id
-}
+# resource "aws_security_group_rule" "postgres_internal" {
+#   count             = var.security_group_id == null && var.create_postgres ? 1 : 0
+#   type              = "ingress"
+#   description       = "Allow Postgres within network"
+#   from_port         = 5432
+#   to_port           = 5432
+#   protocol          = "tcp"
+#   self              = true
+#   security_group_id = local.security_group_id
+# }
 
 resource "aws_security_group_rule" "postgres_external" {
-  count             = var.security_group_id == null && var.create_postgres && length(local.postgres_public_access_cidrs) > 0 ? 1 : 0
+  count             = ( var.security_group_id == null 
+                        && var.create_postgres 
+                        && length(local.postgres_public_access_cidrs) > 0
+                       ) ? 1 : 0
   type              = "ingress"
   description       = "Allow Postgres from source"
   from_port         = 5432
