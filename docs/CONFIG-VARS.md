@@ -101,9 +101,9 @@ If desired, you can deploy into an existing - VPC, Subnets and NAT Gateway, and 
  | vpc_id | ID of pre-existing VPC | string | null | Only required if deploying into existing VPC |
  | subnet_ids | Existing list of subnets mapped to desired usage | map(string) | {} | Only required if deploying into existing Subnets |
 | nat_id | ID of pre-existing AWS NAT Gateway | string | null | Only required if deploying into existing VPC and Subnets|
- | <a name="sg_id">security_group_id</a> | ID of existing Security Group that controls external access and database communication | string | null | Only required if using existing Security Group. See [Security Group](./user/BYOnetwork.md#external-access-security-group) for requirements. |
-| cluster_security_group_id | ID of existing Security Group | string | null | Only required if using existing Cluster Security Group. See [Cluster Security Group](./user/BYOnetwork.md#cluster-security-group) for requirements.|
-| workers_group_id | ID of existing Security Group | string | null | Only required if using existing Security Group for Node Group VMs. See [Workers Security Group](./user/BYOnetwork.md#workers-security-group) for requirements. |
+ | <a name="sg_id">security_group_id</a> | ID of existing Security Group that controls external access to Jump/NFS VMs and Postgres | string | null | Only required if using existing Security Group. See [Security Group](./user/BYOnetwork.md#external-access-security-group) for requirements. |
+| cluster_security_group_id | ID of existing Security Group that controls Pod access to the control plane | string | null | Only required if using existing Cluster Security Group. See [Cluster Security Group](./user/BYOnetwork.md#cluster-security-group) for requirements.|
+| workers_security_group_id | ID of existing Security Group that allows access between node VMs, Jump VM, and data sourcess (nfs, efs, postges) | string | null | Only required if using existing Security Group for Node Group VMs. See [Workers Security Group](./user/BYOnetwork.md#workers-security-group) for requirements. |
 
 Example `subnet_ids` variable:
 

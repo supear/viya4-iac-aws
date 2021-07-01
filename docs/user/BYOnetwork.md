@@ -13,13 +13,11 @@ The table below shows the supported scenarios when using existing/bring your own
 
 #### External Access Security Group
 
-This Security Group is used to set external access to the Jump/NFS VMs and Postgres, as well as internal communication between those objects and the cluster/nodes.  
+This Security Group is used to set external access to the Jump/NFS VMs and Postgres.
 
 | | Protocol | Ports | Source | Destination|
 | :--- | :--- | :--- | :--- | :--- |
 | Outbound | All | All |  | 0.0.0.0/0 |
-| Inbound allow nfs server communication with Jump and node VMs | All | All | Self | |
-| Inbound PostgreSQL from Cluster | TCP | 5432 | Self | |
 | Inbound PostgreSQL external | TCP | 5432 | <optional> the value you would set for the [`postgres_public_access_cidrs`](../CONFIG-VARS.md#postgres_public_access_cidrs) variable | |
 | Inbound ssh access for JUMP/NFS VMs | TCP | 22 | the value you would set for the [`vm_public_access_cidrs`](../CONFIG-VARS.md#vm_public_access_cidrs) variable ||
 
@@ -35,7 +33,7 @@ Allow communication from Node VMs to Cluster control plane.
 
 #### Workers Security Group
 
-Allow communication among Node VMs and form Cluster control plane to Node VMs.
+Allow communication among Node VMs, from Cluster control plane to Node VMs and between Node VMs, Jump VM, and data sources (efs, nfs, postgres).
 
 | | Protocol | Ports | Source | Destination|
 | :--- | :--- | :--- | :--- | :--- |

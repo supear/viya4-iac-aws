@@ -73,29 +73,6 @@ resource "aws_security_group_rule" "vms" {
   security_group_id = local.security_group_id
 }
 
-# resource "aws_security_group_rule" "all" {
-#   count             = var.security_group_id == null ? 1 : 0
-#   type              = "ingress"
-#   description       = "Allow internal security group communication."
-#   from_port         = 0
-#   to_port           = 0
-#   protocol          = "all"
-#   security_group_id = local.security_group_id
-#   self              = true
-# }
-
-
-# resource "aws_security_group_rule" "postgres_internal" {
-#   count             = var.security_group_id == null && var.create_postgres ? 1 : 0
-#   type              = "ingress"
-#   description       = "Allow Postgres within network"
-#   from_port         = 5432
-#   to_port           = 5432
-#   protocol          = "tcp"
-#   self              = true
-#   security_group_id = local.security_group_id
-# }
-
 resource "aws_security_group_rule" "postgres_external" {
   count             = ( var.security_group_id == null 
                         && var.create_postgres 
